@@ -15,3 +15,15 @@ gemspec
 gem 'byebug', group: [:development, :test]
 
 gem "pg", "~> 1.2"
+
+group *%i(development test) do
+  # ops support
+  gem 'bundler-audit'
+
+  # rubocop
+  # NOTE: codeclimate channels only support up to 1.18.3 as of this commit
+  gem 'rubocop', '~> 1.18.3'
+  gem 'rubocop-faker', '~> 1.0.0'
+  gem 'rubocop-performance'
+  gem 'rubocop-rails'
+end
