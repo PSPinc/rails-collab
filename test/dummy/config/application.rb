@@ -1,19 +1,20 @@
+# frozen_string_literal: true
+
 require_relative 'boot'
 
 require 'rails/all'
 
 Bundler.require(*Rails.groups)
 
-require "webpacker" # ensure webpacker (a dev-dependency for the gem) is always required
-require "collab"
+require 'webpacker' # ensure webpacker (a dev-dependency for the gem) is always required
+require 'collab'
 
 module Dummy
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.0
-    
-    config.action_cable.allowed_request_origins = [/http:\/\/*/, /https:\/\/*/]
 
+    config.action_cable.allowed_request_origins = [%r{http://*}, %r{https://*}]
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
@@ -21,4 +22,3 @@ module Dummy
     # the framework and any gems in your application.
   end
 end
-

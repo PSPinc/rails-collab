@@ -1,4 +1,6 @@
-require "json"
+# frozen_string_literal: true
+
+require 'json'
 
 module Collab
   module JS
@@ -6,7 +8,7 @@ module Collab
     @queue_initialized = false
     @queue_initialization_mutex = Mutex.new
 
-    class <<self
+    class << self
       def queue
         initialize_queue unless @queue_initialized
         @queue
@@ -22,28 +24,33 @@ module Collab
       end
 
       def call(name, data = nil, schema_name = nil)
-        req = {name: name, data: data, schemaPackage: ::Collab.config.schema_package}
+        req = { name: name, data: data, schemaPackage: ::Collab.config.schema_package }
         req[:schemaName] = schema_name if schema_name
         with_js { |js| js.call(JSON.generate(req)) }
       end
-      
-      def apply_commit(document, commit, pos: nil, map_steps_through:, schema_name:)
-        call("applyCommit", {doc: document, commit: commit, mapStepsThrough: map_steps_through, pos: pos},schema_name)
+
+      def apply_commit(document, commit, map_steps_through:, schema_name:, pos: nil)
+        call(
+          'applyCommit',
+          { doc: document, commit: commit, mapStepsThrough: map_steps_through, pos: pos },
+          schema_name
+        )
       end
 
       def html_to_document(html, schema_name:)
-        call("htmlToDoc", html, schema_name)
+        call('htmlToDoc', html, schema_name)
       end
 
       def document_to_html(document, schema_name:)
-        call("docToHtml", document, schema_name)
+        call('docToHtml', document, schema_name)
       end
 
       def map_through(steps:, pos:)
-        call("mapThru", {steps: steps, pos: pos})
+        call('mapThru', { steps: steps, pos: pos })
       end
 
-      private 
+      private
+
       # Thread-safe initialization of the NodeJS process queue
       def initialize_queue
         @queue_initialization_mutex.synchronize do
@@ -57,36 +64,42 @@ module Collab
 
     class JSProcess
       def initialize
-         @node = if defined?(Rails)
-                   Dir.chdir(Rails.root) { open_node }
-                 else
-                   open_node
-                 end
+        @node = if defined?(Rails)
+                  Dir.chdir(Rails.root) { open_node }
+                else
+                  open_node
+                end
       end
 
       def call(req)
         @node.puts(req)
         res = JSON.parse(@node.gets)
-        raise ::Collab::JS::JSRuntimeError.new(res["error"]) if res["error"]
-        res["result"]
+        raise ::Collab::JS::JSRuntimeError, res['error'] if res['error']
+
+        res['result']
       end
 
       private
+
       def open_node
-        IO.popen(["node", "-e", "require('@pmcp/authority/dist/rpc')"], "r+")
+        IO.popen(['node', '-e', "require('@pmcp/authority/dist/rpc')"], 'r+')
       end
     end
 
     class JSRuntimeError < StandardError
       def initialize(data)
-        @js_backtrace = data["stack"].split("\n").map{|f| "JavaScript #{f.strip}"} if data["stack"]
+        if data['stack']
+          @js_backtrace = data['stack'].split("\n").map do |fn|
+            "JavaScript #{fn.strip}"
+          end
+        end
 
-        super(data["name"] + ": " + data["message"])
+        super("#{data['name']}: #{data['message']}")
       end
 
       def backtrace
-        return unless  val = super
-        
+        return unless (val = super)
+
         if @js_backtrace
           @js_backtrace + val
         else

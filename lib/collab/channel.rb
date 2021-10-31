@@ -1,21 +1,24 @@
+# frozen_string_literal: true
+
 module Collab
   module Channel
     def subscribed
       reject_unauthorized_connection unless @document = find_document
-  
+
       starting_version = params[:startingVersion]&.to_i
-      raise "missing startingVersion" if starting_version.nil?
-      raise "invalid version" unless @document.possibly_saved_version? starting_version
+      raise 'missing startingVersion' if starting_version.nil?
+      raise 'invalid version' unless @document.possibly_saved_version? starting_version
 
       stream_for @document
-      
+
       commits = @document.commits
-                         .where("document_version > ?", starting_version)
+                         .where('document_version > ?', starting_version)
                          .order(document_version: :asc)
                          .load
-              
+
       unless commits.empty?
-        raise "invalid version" unless commits.first.document_version == (starting_version + 1)
+        raise 'invalid version' unless commits.first.document_version == (starting_version + 1)
+
         commits.lazy.map(&:as_json).each(method(:transmit))
       end
     end
@@ -26,17 +29,19 @@ module Collab
 
     # def select(data)
     #   return unless defined?(_select)
-
+    #
     #   version    = data["v"]&.to_i
     #   anchor_pos = data["anchor"]&.to_i
     #   head_pos   = data["head"]&.to_i
-
-    #   return unless version && @document.possibly_saved_version?(version) && anchor_pos && head_pos
-
+    #
+    #   return unless version &&
+    #                   @document.possibly_saved_version?(version) &&
+    #                   anchor_pos && head_pos
+    #
     #   @document.resolve_selection(anchor_pos, head_pos, version: version) do |selection|
     #     _select selection
     #   end
-
+    #
     #   transmit({ack: "select"})
     # end
 

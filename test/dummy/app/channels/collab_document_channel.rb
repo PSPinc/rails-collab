@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CollabDocumentChannel < ApplicationCable::Channel
   include Collab::Channel
 
@@ -11,11 +13,11 @@ class CollabDocumentChannel < ApplicationCable::Channel
     @document_client.update! selection: selection
 
     DocumentSelectionChannel.broadcast_to(@document, {
-      v: @document.document_version,
-      client_id: @document_client.id,
-      head: @document_client.selection.head.pos,
-      anchor: @document_client.selection.anchor.pos
-    })
+                                            v: @document.document_version,
+                                            client_id: @document_client.id,
+                                            head: @document_client.selection.head.pos,
+                                            anchor: @document_client.selection.anchor.pos
+                                          })
   end
 
   # Find the document to subscribe to based on the params passed to the channel

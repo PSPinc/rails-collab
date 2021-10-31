@@ -1,7 +1,11 @@
+# frozen_string_literal: true
+
 require 'test_helper'
 
-class Collab::Test < ActiveSupport::TestCase
-  test "truth" do
-    assert_kind_of Module, Collab
+module Collab
+  class Test < ActiveSupport::TestCase
+    test 'truth' do
+      assert_kind_of Module, Collab
+    end
   end
 end
