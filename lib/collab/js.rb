@@ -42,6 +42,7 @@ module Collab
       end
 
       def document_to_html(document, schema_name:)
+      binding.pry
         call('docToHtml', document, schema_name)
       end
 
@@ -72,6 +73,7 @@ module Collab
       end
 
       def call(req)
+      binding.pry
         @node.puts(req)
         res = JSON.parse(@node.gets)
         raise ::Collab::JS::JSRuntimeError, res['error'] if res['error']
