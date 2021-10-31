@@ -6,8 +6,10 @@ module Collab
       belongs_to :attached, polymorphic: true
 
       with_options foreign_key: :document_id do
-        has_many :commits, class_name: ::Collab.config.commit_model
-        has_many :tracked_positions, class_name: ::Collab.config.tracked_position_model
+        has_many :commits, class_name: ::Collab.config.commit_model, primary_key: nil,
+                           dependent: :delete_all
+        has_many :tracked_positions, class_name: ::Collab.config.tracked_position_model,
+                                     dependent: :destroy
       end
 
       validates :content, presence: true
@@ -75,7 +77,7 @@ module Collab
                                              pos: original_positions,
                                              schema_name: schema_name
 
-          self.content = result['doc']
+          self.content = result.slice('doc')
 
           commits.create!(
             {
@@ -97,6 +99,10 @@ module Collab
             end
           end
         end
+      end
+
+      def api_client
+        @api_client ||= ApiClient::Collab.new
       end
 
       def from_html(html)

@@ -3,6 +3,9 @@
 module Collab
   module Models
     class Commit < ::Collab::Models::Base
+      # there is no primary key
+      self.primary_key = nil
+
       belongs_to :document, class_name: ::Collab.config.document_model
 
       validates :steps, length: { in: 0..10, allow_nil: false }
