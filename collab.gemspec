@@ -25,6 +25,16 @@ Gem::Specification.new do |spec|
   spec.files = Dir['{app,config,db,lib}/**/*', 'Rakefile']
 
   spec.add_dependency 'rails', '~> 6.0.3', '>= 6.0.3.1'
+  spec.add_dependency 'faraday', '~> 1.8.0'
+  spec.add_dependency 'faraday_middleware', '~> 1.2.0'
+  spec.add_dependency 'faraday-encoding', '~> 0.0.5'
+
+  # allow for adapter of choice
+  # spec.add_dependency 'faraday-httpclient', '~> 1.0.1'
+  # spec.add_dependency 'faraday-net_http', '~> 1.0.1'
+  # spec.add_dependency 'faraday-net_http_persistent', '~> 1.2.0'
+  # spec.add_dependency 'net-http-persistent', '~> 4.0.1'
+  # spec.add_dependency 'faraday-em_http', '~> 1.0.0'
 
   spec.add_development_dependency 'puma'
   spec.add_development_dependency 'sqlite3'
