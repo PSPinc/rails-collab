@@ -28,12 +28,22 @@ module Collab
         ::Collab::JS.document_to_html(
           content, schema_name: schema_name
         ).tap do |serialized_html|
-          # use a thread to prevent deadlocks and avoid incuring the cost of an inline-write
-          Thread.new do
-            with_lock do
-              if (serialized_version == document_version) && self.serialized_html.nil?
-                update_attribute(:serialized_html, serialized_html)
-              end
+          # TODO: use a thread to prevent deadlocks and avoid incuring the cost
+          # of an inline-write
+          if changed?
+            ::Rails.logger.warn do
+              [
+                'developer doing bad code, or there is a race-condition',
+                'persisting unpersisted changes anyway:',
+                changes
+              ].join(' ')
+            end
+            save!
+          end
+
+          with_lock do
+            if (serialized_version == document_version) && self.serialized_html.nil?
+              update_attribute(:serialized_html, serialized_html)
             end
           end
         end
