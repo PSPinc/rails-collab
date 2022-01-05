@@ -8,13 +8,13 @@
 
 class CreateCollabTables < ActiveRecord::Migration[6.0]
   def up
-    unless ActiveRecord::Base.connection.schema_exists?('conversations')
-      ActiveRecord::Base.connection.create_schema('conversations')
+    unless ActiveRecord::Base.connection.schema_exists?('collab')
+      ActiveRecord::Base.connection.create_schema('collab')
     end
     enable_extension 'pgcrypto' unless extensions.include?('pgcrypto')
 
     # document version tracking
-    create_table :"conversations.collab_documents"<%= ",
+    create_table :'collab.collab_documents'<%= ",
                  id: #{@primary_key_type.inspect},
                  default: 'public.gen_random_uuid()'" if @primary_key_type
     %> do |tbl|
@@ -33,9 +33,9 @@ class CreateCollabTables < ActiveRecord::Migration[6.0]
     end
 
     # document change tracking
-    create_table :'conversations.collab_commits', id: false do |tbl|
+    create_table :'collab.collab_commits', id: false do |tbl|
       tbl.references :document, null: false, index: false,
-                     foreign_key: { to_table: :"conversations.collab_documents" }<%= ",
+                     foreign_key: { to_table: :'collab.collab_documents' }<%= ",
                      type: #{@primary_key_type.inspect}" if @primary_key_type
       %>
       tbl.integer :document_version, null: false
@@ -51,11 +51,11 @@ class CreateCollabTables < ActiveRecord::Migration[6.0]
     end
 
     # document cursor tracking
-    create_table :'conversations.collab_tracked_positions'<%=
+    create_table :'collab.collab_tracked_positions'<%=
                  ", id: #{@primary_key_type.inspect}" if @primary_key_type
     %> do |tbl|
       tbl.references :document, null: false, index: false,
-                     foreign_key: { to_table: :"conversations.collab_documents" }<%= ",
+                     foreign_key: { to_table: :'collab.collab_documents' }<%= ",
                      type: #{@primary_key_type.inspect}" if @primary_key_type
       %>
       tbl.references :owner, null: false, polymorphic: true, index: false<%= ",
@@ -73,7 +73,7 @@ class CreateCollabTables < ActiveRecord::Migration[6.0]
     end
 
     # document-client tracking (WebSocket support)
-    create_table :'conversations.collab_document_clients', force: :cascade do |tbl|
+    create_table :'collab.collab_document_clients', force: :cascade do |tbl|
       tbl.string :name
       tbl.bigint :document_id, null: false
 
@@ -86,13 +86,13 @@ class CreateCollabTables < ActiveRecord::Migration[6.0]
   end
 
   def down
-    drop_table :'conversations.collab_tracked_positions'
-    drop_table :'conversations.collab_commits'
-    drop_table :'conversations.collab_documents'
-    drop_table :'conversations.collab_document_clients'
+    drop_table :'collab.collab_tracked_positions'
+    drop_table :'collab.collab_commits'
+    drop_table :'collab.collab_documents'
+    drop_table :'collab.collab_document_clients'
 
-    if ActiveRecord::Base.connection.schema_exists?('conversations')
-      ActiveRecord::Base.connection.drop_schema('conversations')
+    if ActiveRecord::Base.connection.schema_exists?('collab')
+      ActiveRecord::Base.connection.drop_schema('collab')
     end
     remove_extension 'pgcrypto' if extensions.include?('pgcrypto')
   end
