@@ -35,7 +35,7 @@ class CreateCollabTables < ActiveRecord::Migration[6.0]
     # document change tracking
     create_table :'conversations.collab_commits', id: false do |tbl|
       tbl.references :document, null: false, index: false,
-                     foreign_key: { to_table: :collab_documents }<%= ",
+                     foreign_key: { to_table: :"conversations.collab_documents" }<%= ",
                      type: #{@primary_key_type.inspect}" if @primary_key_type
       %>
       tbl.integer :document_version, null: false
@@ -55,7 +55,7 @@ class CreateCollabTables < ActiveRecord::Migration[6.0]
                  ", id: #{@primary_key_type.inspect}" if @primary_key_type
     %> do |tbl|
       tbl.references :document, null: false, index: false,
-                     foreign_key: { to_table: :collab_documents }<%= ",
+                     foreign_key: { to_table: :"conversations.collab_documents" }<%= ",
                      type: #{@primary_key_type.inspect}" if @primary_key_type
       %>
       tbl.references :owner, null: false, polymorphic: true, index: false<%= ",
