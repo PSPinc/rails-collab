@@ -14,9 +14,9 @@ class CreateCollabTables < ActiveRecord::Migration[6.0]
     enable_extension 'pgcrypto' unless extensions.include?('pgcrypto')
 
     # document version tracking
-    create_table :"conversations.collab_documents"<%=
-                 ", id: #{@primary_key_type.inspect}",
-                 default: 'public.gen_random_uuid()' if @primary_key_type
+    create_table :"conversations.collab_documents"<%= ",
+                 id: #{@primary_key_type.inspect},
+                 default: 'public.gen_random_uuid()'" if @primary_key_type
     %> do |tbl|
       tbl.references :attached, null: false, index: false, polymorphic: true<%=
                      ", type: #{@primary_key_type.inspect}" if @primary_key_type %>
