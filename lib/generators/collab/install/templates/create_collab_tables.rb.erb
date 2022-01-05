@@ -1,41 +1,99 @@
+# frozen_string_literal: true
+
+# uuid-ossp.uuid_generate_v4() uses arc4random
+# pgcrypto.gen_random_uuid() uses fortuna
+#
+# arc4random may have some security issues tied to the OS libraries.
+# fortuna is faster than arc4random.
+
 class CreateCollabTables < ActiveRecord::Migration[6.0]
-  def change
-    create_table :collab_documents<%= ", id: #{@primary_key_type.inspect}", default: 'public.gen_random_uuid()' if @primary_key_type %> do |t|
-      t.references :attached,      null: false, index: false, polymorphic: true<%= ", type: #{@primary_key_type.inspect}" if @primary_key_type %>
-      t.string     :attached_as,   null: false
+  def up
+    unless ActiveRecord::Base.connection.schema_exists?('conversations')
+      ActiveRecord::Base.connection.create_schema('conversations')
+    end
+    enable_extension 'pgcrypto' unless extensions.include?('pgcrypto')
 
-      t.index   [:attached_type, :attached_id, :attached_as], name: "index_collab_documents_on_attached"
+    # document version tracking
+    create_table :"conversations.collab_documents"<%=
+                 ", id: #{@primary_key_type.inspect}",
+                 default: 'public.gen_random_uuid()' if @primary_key_type
+    %> do |tbl|
+      tbl.references :attached, null: false, index: false, polymorphic: true<%=
+                     ", type: #{@primary_key_type.inspect}" if @primary_key_type %>
+      tbl.string :attached_as, null: false
 
-      t.jsonb   :content,          null: false
-      t.string  :schema_name,      null: false
-      t.integer :document_version, null: false, default: 0
-      t.text    :serialized_html
+      tbl.jsonb :content, null: false
+      tbl.string :schema_name, null: false
+      tbl.integer :document_version, null: false, default: 0
+      tbl.text :serialized_html
 
-      t.timestamps
+      tbl.timestamps
+
+      tbl.index %i[attached_type attached_id attached_as], name: :idx_collab_documents_on_attached
     end
 
-    create_table :collab_commits, id: false do |t|
-      t.references :document, null: false, foreign_key: {to_table: :collab_documents}, index: false<%= ", type: #{@primary_key_type.inspect}" if @primary_key_type %>
-      t.integer    :document_version, null: false
-      t.index      [:document_id, :document_version], unique: true, order: {document_version: :asc}, name: "index_collab_commits"
+    # document change tracking
+    create_table :'conversations.collab_commits', id: false do |tbl|
+      tbl.references :document, null: false, index: false,
+                     foreign_key: { to_table: :collab_documents }<%= ",
+                     type: #{@primary_key_type.inspect}" if @primary_key_type
+      %>
+      tbl.integer :document_version, null: false
 
-      t.jsonb   :steps, array: true, null: false
-      t.string  :ref
+      tbl.jsonb :steps, array: true, null: false
+      tbl.string :ref
 
-      t.datetime :created_at, null: false
+      # ensure high-precision
+      tbl.datetime :created_at, precision: 6, null: false
+
+      tbl.index %i[document_id document_version], unique: true, order: { document_version: :asc },
+                                                  name: :idx_collab_commits
     end
 
-    create_table :collab_tracked_positions<%= ", id: #{@primary_key_type.inspect}" if @primary_key_type %> do |t|
-      t.references :document, null: false, foreign_key: {to_table: :collab_documents}, index: false<%= ", type: #{@primary_key_type.inspect}" if @primary_key_type %>
-      t.references :owner, null: false, polymorphic: true, index: false<%= ", type: #{@primary_key_type.inspect}" if @primary_key_type %>
-      t.string     :name, null: false
+    # document cursor tracking
+    create_table :'conversations.collab_tracked_positions'<%=
+                 ", id: #{@primary_key_type.inspect}" if @primary_key_type
+    %> do |tbl|
+      tbl.references :document, null: false, index: false,
+                     foreign_key: { to_table: :collab_documents }<%= ",
+                     type: #{@primary_key_type.inspect}" if @primary_key_type
+      %>
+      tbl.references :owner, null: false, polymorphic: true, index: false<%= ",
+                     type: #{@primary_key_type.inspect}" if @primary_key_type
+      %>
 
-      t.integer    :pos,   null: false
-      t.integer    :assoc, null: false, default: 1
-      t.integer    :deleted_at_version
+      tbl.string :name, null: false
+      tbl.integer :pos, null: false
+      tbl.integer :assoc, null: false, default: 1
+      tbl.integer :deleted_at_version
 
-      t.index      [:document_id, :deleted_at_version, :pos], name: "index_collab_tracked_positions_on_document_pos"
-      t.index      [:owner_type, :name, :owner_id], name: "index_collab_tracked_positions_on_owner"
+      tbl.index %i[document_id deleted_at_version pos],
+                name: :idx_collab_tracked_positions_on_document_pos
+      tbl.index %i[owner_type name owner_id], name: :idx_collab_tracked_positions_on_owner
     end
+
+    # document-client tracking (WebSocket support)
+    create_table :'conversations.collab_document_clients', force: :cascade do |tbl|
+      tbl.string :name
+      tbl.bigint :document_id, null: false
+
+      # ensure high-precision
+      tbl.datetime :created_at, precision: 6, null: false
+      tbl.datetime :updated_at, precision: 6, null: false
+
+      tbl.index %i[document_id], name: :idx_collab_document_clients_on_document_id
+    end
+  end
+
+  def down
+    drop_table :'conversations.collab_tracked_positions'
+    drop_table :'conversations.collab_commits'
+    drop_table :'conversations.collab_documents'
+    drop_table :'conversations.collab_document_clients'
+
+    if ActiveRecord::Base.connection.schema_exists?('conversations')
+      ActiveRecord::Base.connection.drop_schema('conversations')
+    end
+    remove_extension 'pgcrypto' if extensions.include?('pgcrypto')
   end
 end
