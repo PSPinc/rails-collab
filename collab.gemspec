@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir['{app,config,db,lib}/**/*', 'Rakefile']
 
-  spec.add_dependency 'rails', '~> 6.0.3', '>= 6.0.3.1'
+  spec.add_dependency 'rails', '~> 7.0.0'
   spec.add_dependency 'faraday', '~> 1.8.0'
   spec.add_dependency 'faraday_middleware', '~> 1.2.0'
   spec.add_dependency 'faraday-encoding', '~> 0.0.5'
