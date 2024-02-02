@@ -76,7 +76,7 @@ module Collab
       end
 
       def api_client
-        @api_client ||= ApiClient::Collab.new service_uri: ENV.fetch('PROSE_SERVICE_URI', 'http://localhost:8282')
+        @api_client ||= ApiClient::Collab.new
       end
 
       def html_to_document(html, schema_name:)
