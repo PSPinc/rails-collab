@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   # spec.description   = %q{TODO: Write a longer description or delete this line.}
   spec.homepage      = 'https://github.com/benaubin/rails-collab'
   spec.license       = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
+  spec.required_ruby_version = Gem::Requirement.new('>= 2.5.0')
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/benaubin/rails-collab'
@@ -24,10 +24,10 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir['{app,config,db,lib}/**/*', 'Rakefile']
 
-  spec.add_dependency 'rails', '~> 7.0.0'
   spec.add_dependency 'faraday', '~> 1.10.2'
-  spec.add_dependency 'faraday_middleware', '~> 1.2.0'
   spec.add_dependency 'faraday-encoding', '~> 0.0.5'
+  spec.add_dependency 'faraday_middleware', '~> 1.2.0'
+  spec.add_dependency 'rails', '~> 7.1.0'
 
   # allow for adapter of choice
   # spec.add_dependency 'faraday-httpclient', '~> 1.0.1'
